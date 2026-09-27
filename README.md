@@ -4,6 +4,22 @@ A high-performance email scheduling system built with **BullMQ**, **Redis**, **P
 
 ---
 
+## Live Demo
+
+**Hosted Application:** https://reachinbox-scheduler-1bgv.onrender.com
+
+> The hosted version demonstrates the email scheduling dashboard, background job processing, rate limiting, and queue management.
+
+---
+
+## Live Demo
+
+**Hosted Application:** https://reachinbox-scheduler-1bgv.onrender.com
+
+> The hosted version demonstrates the email scheduling dashboard, background job processing, rate limiting, and queue management.
+
+---
+
 ## Architecture & Technology Stack
 
 | Layer | Technology | Purpose |
@@ -13,10 +29,10 @@ A high-performance email scheduling system built with **BullMQ**, **Redis**, **P
 | **Database** | PostgreSQL (`pg`) | Persistent relational storage for users, senders, emails, slack |
 | **Queue** | BullMQ (`Queue`, `Worker`) | Delayed email jobs, concurrency control, exponential retry backoff |
 | **Queue Storage** | Redis (`ioredis`) | Job state persistence, atomic rate-limit counters & Lua scripts |
-| **Search Engine**| Elasticsearch (`@elastic/elasticsearch`) | Full-text tokenization and scoring across recipient, subject, body |
-| **Email SMTP** | Nodemailer + Ethereal Email | Real SMTP delivery with rendered web preview URLs |
+| **Search Engine** | Elasticsearch (`@elastic/elasticsearch`) | Full-text tokenization and scoring across recipient, subject, body |
+| **Email SMTP** | Nodemailer + Ethereal Email | SMTP-based test delivery with rendered web preview URLs |
 | **Queue UI** | Bull Board (`@bull-board/express`) | Real-time queue visualizer mounted at `/admin/queues` |
-| **Auth** | Google OAuth 2.0 (`google-auth-library`)| Secure user authentication and session management |
+| **Auth** | Google OAuth 2.0 (`google-auth-library`) | Secure user authentication and session management |
 | **Alerts** | Slack OAuth & Incoming Webhooks | Automated notifications when sender hourly rate limit is hit |
 
 ---
