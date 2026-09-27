@@ -12,14 +12,6 @@ A high-performance email scheduling system built with **BullMQ**, **Redis**, **P
 
 ---
 
-## Live Demo
-
-**Hosted Application:** https://reachinbox-scheduler-1bgv.onrender.com
-
-> The hosted version demonstrates the email scheduling dashboard, background job processing, rate limiting, and queue management.
-
----
-
 ## Architecture & Technology Stack
 
 | Layer | Technology | Purpose |
