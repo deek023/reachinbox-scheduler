@@ -1,0 +1,6 @@
+{
+  "name": "ReachInbox Scheduler",
+  "description": "Full-stack email scheduling platform with delayed job queue, rate limiting, Ethereal SMTP, idempotency, and live delivery monitoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
