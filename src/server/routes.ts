@@ -194,6 +194,7 @@ apiRouter.post('/emails/schedule', async (req, res) => {
       scheduledAt,
       idempotencyKey,
       delayBetweenEmailsMs = 2000,
+      hourlyLimit = 200,
     } = req.body;
 
     if (!subject || !body) {
@@ -285,6 +286,7 @@ apiRouter.post('/emails/schedule', async (req, res) => {
         scheduledAt: leadScheduledIso,
         status: 'SCHEDULED',
         idempotencyKey: uniqueIdempotencyKey,
+        hourlyLimit: Math.max(1, Number(hourlyLimit) || 200),
       });
 
       // 2. Add real BullMQ delayed job (stored in Redis)
@@ -294,6 +296,7 @@ apiRouter.post('/emails/schedule', async (req, res) => {
         recipient: emailRecord.recipient,
         subject: emailRecord.subject,
         scheduledAt: emailRecord.scheduledAt,
+        hourlyLimit: emailRecord.hourlyLimit,
       });
 
       // Update BullMQ job ID on DB record

@@ -26,6 +26,7 @@ export interface EmailJobData {
   recipient?: string;
   subject?: string;
   rescheduleAttempts?: number;
+  hourlyLimit?: number;
 }
 
 /**
@@ -40,6 +41,7 @@ export async function addEmailJob(payload: {
   recipient: string;
   subject: string;
   scheduledAt: string;
+  hourlyLimit?: number;
 }): Promise<Job<EmailJobData>> {
   if (!isRedisConnected()) {
     throw new Error('Cannot schedule BullMQ job: Redis is not connected. Please verify REDIS_URL.');
@@ -57,6 +59,7 @@ export async function addEmailJob(payload: {
       recipient: payload.recipient,
       subject: payload.subject,
       rescheduleAttempts: 0,
+      hourlyLimit: payload.hourlyLimit,
     },
     {
       jobId: `job_${payload.emailId}`,

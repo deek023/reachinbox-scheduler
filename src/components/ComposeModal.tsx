@@ -53,6 +53,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
   };
   const [scheduledAtStr, setScheduledAtStr] = useState<string>(toLocalIso(defaultFutureDate));
   const [delayBetweenEmailsSec, setDelayBetweenEmailsSec] = useState<number>(2);
+  const [hourlyLimit, setHourlyLimit] = useState<number>(200);
 
   // Bulk CSV state
   const [parsedLeads, setParsedLeads] = useState<ParsedLead[]>([]);
@@ -163,6 +164,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
             senderId: senderId || senders[0]?.id,
             scheduledAt: targetDate,
             delayBetweenEmailsMs: delayBetweenEmailsSec * 1000,
+            hourlyLimit,
           }),
         });
 
@@ -188,6 +190,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
             senderId: senderId || senders[0]?.id,
             scheduledAt: targetDate,
             delayBetweenEmailsMs: delayBetweenEmailsSec * 1000,
+            hourlyLimit,
           }),
         });
 
@@ -502,6 +505,27 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1">
                     Paces recipient sends to satisfy minimum interval requirements.
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                    Hourly Email Limit
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={10000}
+                      step={1}
+                      value={hourlyLimit}
+                      onChange={(e) => setHourlyLimit(parseInt(e.target.value, 10) || 1)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs text-slate-400">emails/hr</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Maximum emails allowed per hour for this scheduled batch.
                   </p>
                 </div>
               </div>

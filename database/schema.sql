@@ -57,3 +57,8 @@ CREATE INDEX IF NOT EXISTS idx_emails_status_scheduled_at ON emails (status, sch
 CREATE INDEX IF NOT EXISTS idx_emails_user_id ON emails (user_id);
 CREATE INDEX IF NOT EXISTS idx_emails_idempotency_key ON emails (idempotency_key);
 CREATE INDEX IF NOT EXISTS idx_emails_recipient ON emails (recipient);
+
+-- Per-email hourly rate limit
+ALTER TABLE emails
+ADD COLUMN IF NOT EXISTS hourly_limit INT DEFAULT 200;
+

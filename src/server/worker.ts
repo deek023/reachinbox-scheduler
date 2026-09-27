@@ -55,7 +55,7 @@ export const emailWorker = new Worker<EmailJobData>(
       attempts++;
       const check = await checkAndAcquireRateLimitSlot(
         effectiveSenderId,
-        workerConfig.maxEmailsPerHour,
+        email.hourlyLimit ?? workerConfig.maxEmailsPerHour,
         workerConfig.minDelayBetweenEmailsMs
       );
 
@@ -67,7 +67,7 @@ export const emailWorker = new Worker<EmailJobData>(
       if (check.reason === 'HOURLY_LIMIT_REACHED') {
         // Step 10 & 12: Reschedule into next hourly window and notify Slack!
         const nextHour = getNextHourWindowDate();
-        console.warn(`[BullMQ Rate Limit] Sender ${effectiveSenderId} hit hourly cap (${workerConfig.maxEmailsPerHour}/hr). Rescheduling job ${job.id} to ${nextHour.toISOString()}`);
+        console.warn(`[BullMQ Rate Limit] Sender ${effectiveSenderId} hit hourly cap (${email.hourlyLimit ?? workerConfig.maxEmailsPerHour}/hr). Rescheduling job ${job.id} to ${nextHour.toISOString()}`);
 
         // Revert DB status to SCHEDULED with updated scheduledAt
         const rescheduledCount = (email.rescheduledCount || 0) + 1;
@@ -85,7 +85,7 @@ export const emailWorker = new Worker<EmailJobData>(
           userId: email.userId,
           senderEmail: sender?.email || email.senderEmail || 'unknown@domain.com',
           senderName: sender?.name || email.senderName || 'Sender',
-          hourlyLimit: workerConfig.maxEmailsPerHour,
+          hourlyLimit: email.hourlyLimit ?? workerConfig.maxEmailsPerHour,
           postponedCount: 1,
           nextAvailableHour: nextHour.toLocaleTimeString(),
         });

@@ -79,6 +79,7 @@ export async function scheduleEmail(payload: {
   senderId?: string;
   scheduledAt: string;
   delayBetweenEmailsMs?: number;
+  hourlyLimit?: number;
   idempotencyKey?: string;
 }) {
   const res = await fetch(`${BASE_URL}/emails/schedule`, {

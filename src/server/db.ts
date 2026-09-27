@@ -142,7 +142,7 @@ export async function getEmailById(id: string): Promise<EmailRecord | undefined>
       id, user_id as "userId", sender_id as "senderId",
       sender_name as "senderName", sender_email as "senderEmail",
       recipient, subject, body,
-      scheduled_at as "scheduledAt", status,
+      scheduled_at as "scheduledAt", hourly_limit as "hourlyLimit", status,
       bullmq_job_id as "bullmqJobId", message_id as "messageId",
       sent_at as "sentAt", preview_url as "previewUrl",
       error, idempotency_key as "idempotencyKey",
@@ -161,7 +161,7 @@ export async function getEmailByIdempotencyKey(key: string): Promise<EmailRecord
       id, user_id as "userId", sender_id as "senderId",
       sender_name as "senderName", sender_email as "senderEmail",
       recipient, subject, body,
-      scheduled_at as "scheduledAt", status,
+      scheduled_at as "scheduledAt", hourly_limit as "hourlyLimit", status,
       bullmq_job_id as "bullmqJobId", message_id as "messageId",
       sent_at as "sentAt", preview_url as "previewUrl",
       error, idempotency_key as "idempotencyKey",
@@ -212,7 +212,7 @@ export async function getEmails(options?: {
       id, user_id as "userId", sender_id as "senderId",
       sender_name as "senderName", sender_email as "senderEmail",
       recipient, subject, body,
-      scheduled_at as "scheduledAt", status,
+      scheduled_at as "scheduledAt", hourly_limit as "hourlyLimit", status,
       bullmq_job_id as "bullmqJobId", message_id as "messageId",
       sent_at as "sentAt", preview_url as "previewUrl",
       error, idempotency_key as "idempotencyKey",
@@ -237,6 +237,7 @@ export async function createEmail(email: {
   subject: string;
   body: string;
   scheduledAt: string;
+  hourlyLimit?: number;
   status?: EmailStatus;
   idempotencyKey: string;
 }): Promise<EmailRecord> {
@@ -246,14 +247,14 @@ export async function createEmail(email: {
   const res = await pool.query<any>(
     `INSERT INTO emails (
       id, user_id, sender_id, sender_name, sender_email,
-      recipient, subject, body, scheduled_at, status, idempotency_key
+      recipient, subject, body, scheduled_at, hourly_limit, status, idempotency_key
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING
       id, user_id as "userId", sender_id as "senderId",
       sender_name as "senderName", sender_email as "senderEmail",
       recipient, subject, body,
-      scheduled_at as "scheduledAt", status,
+      scheduled_at as "scheduledAt", hourly_limit as "hourlyLimit", status,
       bullmq_job_id as "bullmqJobId", message_id as "messageId",
       sent_at as "sentAt", preview_url as "previewUrl",
       error, idempotency_key as "idempotencyKey",
@@ -269,6 +270,7 @@ export async function createEmail(email: {
       email.subject,
       email.body,
       email.scheduledAt,
+      email.hourlyLimit ?? 200,
       status,
       email.idempotencyKey,
     ]
@@ -292,7 +294,7 @@ export async function claimEmailForWorker(emailId: string): Promise<EmailRecord 
       id, user_id as "userId", sender_id as "senderId",
       sender_name as "senderName", sender_email as "senderEmail",
       recipient, subject, body,
-      scheduled_at as "scheduledAt", status,
+      scheduled_at as "scheduledAt", hourly_limit as "hourlyLimit", status,
       bullmq_job_id as "bullmqJobId", message_id as "messageId",
       sent_at as "sentAt", preview_url as "previewUrl",
       error, idempotency_key as "idempotencyKey",
@@ -353,7 +355,7 @@ export async function updateEmail(id: string, patch: Partial<EmailRecord>): Prom
       id, user_id as "userId", sender_id as "senderId",
       sender_name as "senderName", sender_email as "senderEmail",
       recipient, subject, body,
-      scheduled_at as "scheduledAt", status,
+      scheduled_at as "scheduledAt", hourly_limit as "hourlyLimit", status,
       bullmq_job_id as "bullmqJobId", message_id as "messageId",
       sent_at as "sentAt", preview_url as "previewUrl",
       error, idempotency_key as "idempotencyKey",

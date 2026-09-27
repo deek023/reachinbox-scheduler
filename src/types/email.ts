@@ -26,6 +26,7 @@ export interface EmailRecord {
   subject: string;
   body: string;
   scheduledAt: string;
+  hourlyLimit?: number;
   status: EmailStatus;
   bullmqJobId?: string;
   messageId?: string;
@@ -92,6 +93,7 @@ export interface ScheduleEmailPayload {
   senderId?: string;
   scheduledAt: string;
   idempotencyKey?: string;
+  hourlyLimit?: number;
 }
 
 export interface BulkSchedulePayload {
@@ -100,6 +102,7 @@ export interface BulkSchedulePayload {
   body: string;
   scheduledAt: string;
   delayBetweenEmailsMs?: number;
+  hourlyLimit?: number;
   recipients: Array<{
     email: string;
     name?: string;
