@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Mail,
   Send,
-  Zap,
   Slack,
   UserCheck,
   ChevronDown,
@@ -11,7 +10,9 @@ import {
   Plus,
   ExternalLink,
   Shield,
-  Activity,
+  Database,
+  Server,
+  Layers,
 } from 'lucide-react';
 import type { User, QueueStats } from '../types/email.ts';
 
@@ -45,173 +46,237 @@ export const Header: React.FC<HeaderProps> = ({
   isRefreshing,
 }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [healthMenuOpen, setHealthMenuOpen] = useState(false);
+  const healthRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (healthRef.current && !healthRef.current.contains(event.target as Node)) {
+        setHealthMenuOpen(false);
+      }
+      if (userRef.current && !userRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const allOperational = dbConnected && redisConnected;
 
   return (
-    <header className="sticky top-0 z-30 bg-slate-900 border-b border-slate-800 text-white shadow-md">
+    <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 text-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 ring-1 ring-white/20">
-              <Mail className="h-5 w-5 text-white" />
+        <div className="flex items-center justify-between h-14">
+          {/* Brand & System Health */}
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2.5">
+              <div className="h-7 w-7 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
+                <Mail className="h-4 w-4" />
+              </div>
+              <span className="font-semibold text-sm tracking-tight text-white">
+                ReachInbox
+              </span>
+              <span className="hidden sm:inline-block text-xs text-slate-400 border-l border-slate-800 pl-2.5">
+                Scheduler
+              </span>
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                  ReachInbox
+
+            {/* Health Popover Button */}
+            <div className="relative" ref={healthRef}>
+              <button
+                type="button"
+                onClick={() => setHealthMenuOpen(!healthMenuOpen)}
+                className="flex items-center space-x-2 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    allOperational ? 'bg-emerald-400' : 'bg-amber-400'
+                  }`}
+                />
+                <span className="hidden md:inline">
+                  {allOperational ? 'All Systems Operational' : 'System Degraded'}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-full font-mono font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  Scheduler v1.0
-                </span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-slate-400">
-                <span className="flex items-center">
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
-                      redisConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'
-                    }`}
-                  />
-                  <span className={redisConnected ? 'text-emerald-400' : 'text-rose-400'}>
-                    Redis: {redisConnected ? 'Connected' : 'Offline'}
-                  </span>
-                </span>
-                <span>•</span>
-                <span className="flex items-center">
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
-                      dbConnected ? 'bg-emerald-400' : 'bg-rose-400'
-                    }`}
-                  />
-                  <span className={dbConnected ? 'text-emerald-400' : 'text-rose-400'}>
-                    PostgreSQL: {dbConnected ? 'Connected' : 'Offline'}
-                  </span>
-                </span>
-                <span>•</span>
-                <span>Ethereal SMTP</span>
-              </div>
+                <ChevronDown className="h-3 w-3 text-slate-400" />
+              </button>
+
+              {healthMenuOpen && (
+                <div className="absolute left-0 mt-1.5 w-72 bg-slate-900 rounded-md border border-slate-800 p-3 text-xs text-slate-200 shadow-lg z-50 space-y-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                    <span>Infrastructure Status</span>
+                    <button
+                      type="button"
+                      onClick={onRefresh}
+                      className="text-blue-400 hover:text-blue-300 flex items-center space-x-1 font-normal capitalize"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      <span>Sync</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between p-1.5 rounded bg-slate-950 border border-slate-800/60">
+                      <span className="flex items-center space-x-2 text-slate-300">
+                        <Database className="h-3.5 w-3.5 text-slate-400" />
+                        <span>PostgreSQL</span>
+                      </span>
+                      <span className={dbConnected ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}>
+                        {dbConnected ? 'Connected' : 'Offline'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-1.5 rounded bg-slate-950 border border-slate-800/60">
+                      <span className="flex items-center space-x-2 text-slate-300">
+                        <Server className="h-3.5 w-3.5 text-slate-400" />
+                        <span>Redis</span>
+                      </span>
+                      <span className={redisConnected ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}>
+                        {redisConnected ? 'Connected' : 'Offline'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-1.5 rounded bg-slate-950 border border-slate-800/60">
+                      <span className="flex items-center space-x-2 text-slate-300">
+                        <Layers className="h-3.5 w-3.5 text-slate-400" />
+                        <span>BullMQ Workers</span>
+                      </span>
+                      <span className="text-slate-300 font-mono tabular-nums">
+                        {queueStats?.concurrency ?? 5} slots
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-1.5 rounded bg-slate-950 border border-slate-800/60">
+                      <span className="flex items-center space-x-2 text-slate-300">
+                        <Mail className="h-3.5 w-3.5 text-slate-400" />
+                        <span>Ethereal SMTP</span>
+                      </span>
+                      <span className="text-emerald-400 font-medium">Ready</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-[11px] text-slate-400">
+                    <span>Queue Monitor</span>
+                    <a
+                      href="/admin/queues"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 flex items-center space-x-1"
+                    >
+                      <span>Bull Board</span>
+                      <ExternalLink className="h-2.5 w-2.5" />
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Quick Metrics & Bull Board Link */}
-          <div className="hidden md:flex items-center space-x-3 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 text-xs">
-            <div className="flex items-center space-x-1.5">
-              <span className="text-slate-400">Concurrency:</span>
-              <span className="font-semibold text-slate-200">{queueStats?.concurrency ?? 5} slots</span>
-            </div>
-            <div className="h-3 w-px bg-slate-700" />
-            <div className="flex items-center space-x-1.5">
-              <span className="text-slate-400">Hourly Limit:</span>
-              <span className="font-semibold text-indigo-300">
-                {queueStats?.maxEmailsPerHour ?? 200}/hr
-              </span>
-            </div>
-            <div className="h-3 w-px bg-slate-700" />
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-2">
             <a
               href="/admin/queues"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-1 text-indigo-400 hover:text-indigo-300 font-medium transition"
+              className="hidden lg:flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white bg-slate-950 hover:bg-slate-800 border border-slate-800 transition-colors"
             >
               <span>Bull Board</span>
               <ExternalLink className="h-3 w-3" />
             </a>
-          </div>
 
-          {/* Right Action buttons */}
-          <div className="flex items-center space-x-2.5">
-            {/* Refresh */}
             <button
-              onClick={onRefresh}
-              title="Refresh queue and emails"
-              className={`p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-colors ${
-                isRefreshing ? 'animate-spin text-indigo-400' : ''
-              }`}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-
-            {/* Senders Manager */}
-            <button
+              type="button"
               onClick={onOpenSenders}
-              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition"
+              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white bg-slate-950 hover:bg-slate-800 border border-slate-800 transition-colors"
             >
-              <Plus className="h-3.5 w-3.5 text-indigo-400" />
+              <Plus className="h-3 w-3 text-slate-400" />
               <span>Senders</span>
             </button>
 
-            {/* Slack Connection */}
             <button
+              type="button"
               onClick={onOpenSlack}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors ${
                 slackConnected
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20'
-                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                  ? 'text-emerald-300 bg-emerald-950/30 border-emerald-800/60 hover:bg-emerald-950/50'
+                  : 'text-slate-300 bg-slate-950 hover:bg-slate-800 border-slate-800'
               }`}
             >
-              <Slack className="h-3.5 w-3.5" />
+              <Slack className="h-3 w-3 text-slate-400" />
               <span className="hidden sm:inline">Slack</span>
-              {slackConnected && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 ml-0.5" />}
+              {slackConnected && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
             </button>
 
-            {/* Compose Button */}
             <button
-              onClick={onOpenCompose}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium text-sm shadow-md shadow-indigo-600/20 transition-all transform active:scale-95"
+              type="button"
+              onClick={onRefresh}
+              title="Refresh queue and data"
+              className={`p-1.5 rounded-md text-slate-400 hover:text-slate-200 bg-slate-950 hover:bg-slate-800 border border-slate-800 transition-colors ${
+                isRefreshing ? 'animate-spin text-blue-400' : ''
+              }`}
             >
-              <Send className="h-4 w-4" />
+              <RefreshCw className="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onOpenCompose}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors shadow-sm"
+            >
+              <Send className="h-3.5 w-3.5" />
               <span>Compose</span>
             </button>
 
-            {/* Real Google OAuth User Profile */}
-            <div className="relative">
+            {/* User Profile */}
+            <div className="relative" ref={userRef}>
               {user ? (
-                <div className="relative">
+                <div>
                   <button
+                    type="button"
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center space-x-2 p-1 pl-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+                    className="flex items-center space-x-2 p-1 rounded-md bg-slate-950 hover:bg-slate-800 border border-slate-800 transition-colors"
                   >
                     {user.avatar ? (
                       <img
                         src={user.avatar}
                         alt={user.name}
-                        className="h-7 w-7 rounded-full object-cover ring-1 ring-indigo-500/40"
+                        className="h-6 w-6 rounded object-cover"
                       />
                     ) : (
-                      <div className="h-7 w-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">
+                      <div className="h-6 w-6 rounded bg-slate-800 text-slate-200 flex items-center justify-center text-xs font-semibold">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="hidden md:inline text-xs font-medium text-slate-200 max-w-[100px] truncate">
+                    <span className="hidden md:inline text-xs font-medium text-slate-300 max-w-[100px] truncate">
                       {user.name.split(' ')[0]}
                     </span>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                    <ChevronDown className="h-3 w-3 text-slate-400" />
                   </button>
 
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-slate-900 rounded-xl shadow-2xl border border-slate-700 py-2 text-slate-200 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                      <div className="px-4 py-2.5 border-b border-slate-800">
-                        <p className="text-xs font-semibold text-white">{user.name}</p>
-                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
-                        <div className="mt-1 flex items-center text-[10px] text-emerald-400 font-medium">
-                          <UserCheck className="h-3 w-3 mr-1" /> Google Authenticated
-                        </div>
+                    <div className="absolute right-0 mt-1.5 w-56 bg-slate-900 rounded-md border border-slate-800 py-1 text-slate-200 shadow-lg z-50">
+                      <div className="px-3 py-2 border-b border-slate-800">
+                        <p className="text-xs font-medium text-white">{user.name}</p>
+                        <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => {
                           setUserMenuOpen(false);
                           onLoginWithGoogle();
                         }}
-                        className="w-full text-left px-4 py-2 text-xs hover:bg-slate-800 flex items-center space-x-2 text-slate-300"
+                        className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 flex items-center space-x-2 text-slate-300"
                       >
-                        <Shield className="h-3.5 w-3.5 text-indigo-400" />
+                        <Shield className="h-3.5 w-3.5 text-blue-400" />
                         <span>Google OAuth Status</span>
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setUserMenuOpen(false);
                           onLogout();
                         }}
-                        className="w-full text-left px-4 py-2 text-xs hover:bg-rose-500/10 text-rose-400 flex items-center space-x-2"
+                        className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 text-rose-400 flex items-center space-x-2"
                       >
                         <LogOut className="h-3.5 w-3.5" />
                         <span>Sign Out</span>
@@ -221,11 +286,12 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               ) : (
                 <button
+                  type="button"
                   onClick={onLoginWithGoogle}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-medium text-white transition shadow"
+                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-colors"
                 >
-                  <UserCheck className="h-3.5 w-3.5" />
-                  <span>Google Sign In</span>
+                  <UserCheck className="h-3.5 w-3.5 text-slate-400" />
+                  <span>Sign In</span>
                 </button>
               )}
             </div>

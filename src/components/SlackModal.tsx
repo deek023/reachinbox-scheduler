@@ -75,31 +75,34 @@ export const SlackModal: React.FC<SlackModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <Slack className="h-4 w-4" />
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 flex items-center justify-center p-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+          <div className="flex items-center space-x-2">
+            <div className="h-6 w-6 rounded bg-slate-800 text-slate-300 flex items-center justify-center">
+              <Slack className="h-3.5 w-3.5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">Slack Rate-Limit Notifications</h3>
-              <p className="text-xs text-slate-400">Real Slack alert dispatch when hourly limit is reached</p>
+              <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
+                Slack Rate-Limit Notifications
+              </h3>
+              <p className="text-[11px] text-slate-400">Slack alert dispatch when hourly limit is reached</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="bg-slate-800/40 border border-slate-700/80 rounded-xl p-3.5 text-xs text-slate-300 space-y-2">
-            <div className="flex items-center space-x-2 text-indigo-300 font-medium">
-              <AlertTriangle className="h-4 w-4" />
-              <span>Real Automated Rate-Limit Trigger</span>
+        <div className="p-5 space-y-3.5 text-xs">
+          <div className="bg-slate-950 border border-slate-800 rounded-md p-3 text-slate-300 space-y-1.5">
+            <div className="flex items-center space-x-2 text-slate-200 font-medium">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+              <span>Automated Rate-Limit Trigger</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
               When a sender reaches their hourly limit in Redis, the BullMQ worker preserves the email,
@@ -107,43 +110,43 @@ export const SlackModal: React.FC<SlackModalProps> = ({
             </p>
           </div>
 
-          {/* Option A: Slack OAuth */}
           {slackConfigured ? (
-            <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700 space-y-2 text-xs">
-              <h4 className="font-semibold text-white">Connect via Slack OAuth App</h4>
+            <div className="p-3.5 rounded-md bg-slate-950 border border-slate-800 space-y-2">
+              <h4 className="font-semibold text-white text-[11px] uppercase tracking-wider">Connect via Slack OAuth App</h4>
               <p className="text-slate-400 text-[11px]">
-                One-click OAuth authorization requesting <code className="text-indigo-300">incoming-webhook</code> scope.
+                One-click OAuth authorization requesting incoming-webhook scope.
               </p>
               <button
+                type="button"
                 onClick={handleOAuthConnect}
-                className="w-full py-2 bg-[#4A154B] hover:bg-[#611f69] text-white font-medium text-xs rounded-lg transition flex items-center justify-center space-x-1.5"
+                className="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs rounded border border-slate-700 transition-colors flex items-center justify-center space-x-1.5"
               >
-                <Slack className="h-4 w-4" />
+                <Slack className="h-3.5 w-3.5" />
                 <span>Authorize with Slack</span>
                 <ExternalLink className="h-3 w-3" />
               </button>
             </div>
           ) : null}
 
-          {/* Option B: Incoming Webhook */}
-          <form onSubmit={handleWebhookSubmit} className="space-y-3.5 pt-1">
-            <h4 className="text-xs font-semibold text-white">Slack Incoming Webhook URL</h4>
+          {/* Incoming Webhook */}
+          <form onSubmit={handleWebhookSubmit} className="space-y-3 pt-1">
+            <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Incoming Webhook URL</h4>
 
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                Workspace / Team Name
+              <label className="block text-[11px] text-slate-400 mb-1">
+                Workspace or Team Name
               </label>
               <input
                 type="text"
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
-                placeholder="My Organization Ops"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:ring-2 focus:ring-indigo-500"
+                placeholder="Operations Workspace"
+                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 mb-1">
+              <label className="block text-[11px] text-slate-400 mb-1">
                 Target Channel
               </label>
               <input
@@ -151,12 +154,12 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                 value={channel}
                 onChange={(e) => setChannel(e.target.value)}
                 placeholder="#reachinbox-alerts"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 mb-1">
+              <label className="block text-[11px] text-slate-400 mb-1">
                 Webhook URL
               </label>
               <input
@@ -165,12 +168,12 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                 value={webhookUrl}
                 onChange={(e) => setWebhookUrl(e.target.value)}
                 placeholder="https://hooks.slack.com/services/T.../B.../..."
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:ring-2 focus:ring-indigo-500 font-mono"
+                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
               />
             </div>
 
             {testResult && (
-              <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-800/60 text-xs text-emerald-300 flex items-center space-x-2">
+              <div className="p-2.5 rounded bg-emerald-950/30 border border-emerald-800/60 text-xs text-emerald-300 flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
                 <span>{testResult}</span>
               </div>
@@ -182,7 +185,7 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                   <button
                     type="button"
                     onClick={handleDisconnect}
-                    className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs transition"
+                    className="flex items-center space-x-1 px-2.5 py-1 rounded bg-rose-950/40 hover:bg-rose-950/60 text-rose-400 border border-rose-800 text-xs transition-colors"
                   >
                     <Trash2 className="h-3 w-3" />
                     <span>Disconnect</span>
@@ -190,9 +193,9 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                   <button
                     type="button"
                     onClick={handleTest}
-                    className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition"
+                    className="flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs transition-colors"
                   >
-                    <Send className="h-3 w-3 text-indigo-400" />
+                    <Send className="h-3 w-3 text-blue-400" />
                     <span>Send Test</span>
                   </button>
                 </div>
@@ -204,14 +207,14 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 transition-colors"
                 >
                   Close
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs rounded-lg shadow transition"
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded shadow-sm transition-colors"
                 >
                   {isSubmitting ? 'Saving...' : connection ? 'Update Webhook' : 'Save Webhook'}
                 </button>

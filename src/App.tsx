@@ -1,25 +1,12 @@
-/**
- * ReachInbox Scheduler - Production Full-Stack Application
- * Real BullMQ + ioredis Delayed Queue, Redis Atomic Rate-Limiting, PostgreSQL Database, Ethereal SMTP
- */
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Calendar,
-  Send,
+  Clock,
+  CheckCircle2,
   Activity,
   Search,
-  CheckCircle2,
-  Clock,
-  Plus,
-  RefreshCw,
-  Bell,
-  Sparkles,
-  Sliders,
-  ShieldCheck,
-  Server,
-  AlertCircle,
-  ExternalLink,
+  Check,
+  Layers,
+  Zap,
 } from 'lucide-react';
 import { Header } from './components/Header.tsx';
 import { ScheduledTable } from './components/ScheduledTable.tsx';
@@ -43,10 +30,8 @@ import type {
 } from './types/email.ts';
 
 export default function App() {
-  // Navigation
   const [activeTab, setActiveTab] = useState<'scheduled' | 'sent' | 'queue' | 'search'>('scheduled');
 
-  // Core Data State
   const [user, setUser] = useState<User | null>(null);
   const [senders, setSenders] = useState<Sender[]>([]);
   const [scheduledEmails, setScheduledEmails] = useState<EmailRecord[]>([]);
@@ -57,11 +42,9 @@ export default function App() {
   const [dbConnected, setDbConnected] = useState<boolean>(false);
   const [redisConnected, setRedisConnected] = useState<boolean>(false);
 
-  // Loading States
   const [isLoadingEmails, setIsLoadingEmails] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Modals State
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [isSlackOpen, setIsSlackOpen] = useState(false);
   const [isSendersOpen, setIsSendersOpen] = useState(false);
@@ -69,29 +52,26 @@ export default function App() {
   const [selectedDetailEmail, setSelectedDetailEmail] = useState<EmailRecord | null>(null);
   const [selectedRescheduleEmail, setSelectedRescheduleEmail] = useState<EmailRecord | null>(null);
 
-  // Toast Notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Check URL parameters for OAuth callbacks
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('auth') === 'success') {
-      showToast('Successfully authenticated via Google OAuth!');
+      showToast('Successfully authenticated via Google OAuth');
       window.history.replaceState({}, '', '/');
     } else if (params.get('auth') === 'error') {
       showToast(`Google OAuth error: ${params.get('message') || 'Authentication failed'}`);
       window.history.replaceState({}, '', '/');
     } else if (params.get('slack') === 'connected') {
-      showToast('Slack connected successfully!');
+      showToast('Slack alerts connected successfully');
       window.history.replaceState({}, '', '/');
     }
   }, []);
 
-  // Initial Load
   const loadInitialData = useCallback(async () => {
     try {
       setIsRefreshing(true);
@@ -140,9 +120,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    loadInitialData();
+    setIsLoadingEmails(true);
+    loadInitialData().finally(() => setIsLoadingEmails(false));
 
-    // Auto poll queue status every 4 seconds to reflect live BullMQ worker dispatches
     const interval = setInterval(() => {
       api.fetchQueueStats().then((res) => {
         if (res.queue) setQueueStats(res.queue);
@@ -160,16 +140,15 @@ export default function App() {
     return () => clearInterval(interval);
   }, [loadInitialData]);
 
-  // Actions
   const handleScheduleSuccess = (count: number) => {
-    showToast(`Successfully scheduled ${count} email job${count === 1 ? '' : 's'} into BullMQ!`);
+    showToast(`Successfully scheduled ${count} email job${count === 1 ? '' : 's'} into BullMQ`);
     loadInitialData();
   };
 
   const handleSendNow = async (id: string) => {
     try {
       await api.sendEmailNow(id);
-      showToast('Scheduled delay bypassed. Promoted job for immediate dispatch!');
+      showToast('Scheduled delay bypassed. Promoted job for immediate dispatch.');
       loadInitialData();
     } catch (err: unknown) {
       alert('Failed to send: ' + (err instanceof Error ? err.message : String(err)));
@@ -177,10 +156,10 @@ export default function App() {
   };
 
   const handleCancelEmail = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel and remove this scheduled email?')) return;
+    if (!confirm('Cancel and remove this scheduled email?')) return;
     try {
       await api.cancelScheduledEmail(id);
-      showToast('Email schedule and BullMQ delayed job removed.');
+      showToast('Email schedule and BullMQ delayed job removed');
       loadInitialData();
     } catch (err: unknown) {
       alert('Failed to cancel: ' + (err instanceof Error ? err.message : String(err)));
@@ -190,7 +169,7 @@ export default function App() {
   const handleRescheduleConfirm = async (id: string, newScheduledAt: string) => {
     try {
       await api.rescheduleEmail(id, newScheduledAt);
-      showToast('Email rescheduled in PostgreSQL and re-armed in BullMQ.');
+      showToast('Email rescheduled in PostgreSQL and re-armed in BullMQ');
       loadInitialData();
     } catch (err: unknown) {
       alert('Failed to reschedule: ' + (err instanceof Error ? err.message : String(err)));
@@ -210,7 +189,7 @@ export default function App() {
   const handleRetryJob = async (jobId: string) => {
     try {
       await api.retryQueueJob(jobId);
-      showToast(`Job ${jobId} re-enqueued in BullMQ.`);
+      showToast(`Job ${jobId} re-enqueued in BullMQ`);
       loadInitialData();
     } catch (err: unknown) {
       alert('Failed to retry: ' + (err instanceof Error ? err.message : String(err)));
@@ -220,18 +199,18 @@ export default function App() {
   const handleAddSender = async (data: { name: string; email: string; isDefault?: boolean }) => {
     const res = await api.createSender(data);
     setSenders((prev) => [...prev, res.sender]);
-    showToast(`New sender "${res.sender.name}" registered in PostgreSQL.`);
+    showToast(`New sender "${res.sender.name}" registered in PostgreSQL`);
   };
 
   const handleLogout = async () => {
     await api.logoutUser();
     setUser(null);
-    showToast('Logged out.');
+    showToast('Signed out successfully');
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
-      {/* Top Navigation Header */}
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      {/* Top Header */}
       <Header
         user={user}
         queueStats={queueStats}
@@ -247,91 +226,103 @@ export default function App() {
         isRefreshing={isRefreshing}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Navigation Tabs Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-          <nav className="flex space-x-2">
+      {/* Main Workspace Container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-4">
+        {/* Compact Horizontal Operational Stat Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-y-2 py-2 px-3 bg-slate-900 border border-slate-800 rounded-md text-xs">
+          <div className="flex items-center space-x-2">
+            <Clock className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+            <span className="text-slate-400">Scheduled:</span>
+            <span className="font-semibold text-white font-mono tabular-nums">{scheduledEmails.length}</span>
+          </div>
+
+          <div className="hidden sm:block h-3 w-px bg-slate-800" />
+
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+            <span className="text-slate-400">Delivered:</span>
+            <span className="font-semibold text-white font-mono tabular-nums">{sentEmails.length}</span>
+          </div>
+
+          <div className="hidden sm:block h-3 w-px bg-slate-800" />
+
+          <div className="flex items-center space-x-2">
+            <Layers className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            <span className="text-slate-400">Worker Concurrency:</span>
+            <span className="font-semibold text-slate-200 font-mono tabular-nums">{queueStats?.concurrency ?? 5} slots</span>
+          </div>
+
+          <div className="hidden sm:block h-3 w-px bg-slate-800" />
+
+          <div className="flex items-center space-x-2">
+            <Zap className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+            <span className="text-slate-400">Hourly Rate Cap:</span>
+            <span className="font-semibold text-slate-200 font-mono tabular-nums">{queueStats?.maxEmailsPerHour ?? 200}/hr</span>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="border-b border-slate-800">
+          <nav className="flex space-x-6">
             <button
+              type="button"
               onClick={() => setActiveTab('scheduled')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
+              className={`pb-2.5 text-xs transition-colors flex items-center space-x-1.5 border-b-2 font-medium ${
                 activeTab === 'scheduled'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 ring-1 ring-white/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                  ? 'border-blue-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Clock className="h-4 w-4" />
               <span>Scheduled Emails</span>
-              <span
-                className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-mono ${
-                  activeTab === 'scheduled'
-                    ? 'bg-indigo-800 text-indigo-100'
-                    : 'bg-slate-800 text-slate-400'
-                }`}
-              >
-                {scheduledEmails.length}
+              <span className="text-[11px] font-mono tabular-nums text-slate-400">
+                ({scheduledEmails.length})
               </span>
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('sent')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
+              className={`pb-2.5 text-xs transition-colors flex items-center space-x-1.5 border-b-2 font-medium ${
                 activeTab === 'sent'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 ring-1 ring-white/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                  ? 'border-blue-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <CheckCircle2 className="h-4 w-4" />
               <span>Sent History</span>
-              <span
-                className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-mono ${
-                  activeTab === 'sent'
-                    ? 'bg-indigo-800 text-indigo-100'
-                    : 'bg-slate-800 text-slate-400'
-                }`}
-              >
-                {sentEmails.length}
+              <span className="text-[11px] font-mono tabular-nums text-slate-400">
+                ({sentEmails.length})
               </span>
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('queue')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
+              className={`pb-2.5 text-xs transition-colors flex items-center space-x-1.5 border-b-2 font-medium ${
                 activeTab === 'queue'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 ring-1 ring-white/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                  ? 'border-blue-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Activity className="h-4 w-4" />
               <span>BullMQ Monitor</span>
-              <span className={`h-2 w-2 rounded-full ml-1 ${redisConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  redisConnected ? 'bg-emerald-400' : 'bg-rose-500'
+                }`}
+              />
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('search')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
+              className={`pb-2.5 text-xs transition-colors flex items-center space-x-1.5 border-b-2 font-medium ${
                 activeTab === 'search'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 ring-1 ring-white/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                  ? 'border-blue-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Search className="h-4 w-4" />
               <span>Elasticsearch</span>
             </button>
           </nav>
-
-          {/* Quick Info & Bull Board Shortcut */}
-          <div className="hidden lg:flex items-center space-x-4 text-xs text-slate-400">
-            <a
-              href="/admin/queues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-400 border border-slate-800 transition"
-            >
-              <span>Live Bull Board</span>
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
         </div>
 
         {/* Tab Views */}
@@ -343,6 +334,7 @@ export default function App() {
             onReschedule={(email) => setSelectedRescheduleEmail(email)}
             onCancel={handleCancelEmail}
             onViewDetails={(email) => setSelectedDetailEmail(email)}
+            onOpenCompose={() => setIsComposeOpen(true)}
           />
         )}
 
@@ -351,6 +343,7 @@ export default function App() {
             emails={sentEmails}
             isLoading={isLoadingEmails}
             onViewDetails={(email) => setSelectedDetailEmail(email)}
+            onOpenCompose={() => setIsComposeOpen(true)}
           />
         )}
 
@@ -370,10 +363,47 @@ export default function App() {
         )}
       </main>
 
-      {/* Floating Toast Notification */}
+      {/* Enterprise Legal and Links Footer (Rule 25) */}
+      <footer className="mt-auto border-t border-slate-800 bg-slate-900 py-4 text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center space-x-4">
+            <span className="text-slate-300 font-medium">ReachInbox Scheduler</span>
+            <span className="text-slate-600">|</span>
+            <span>BullMQ Delayed Queue Engine</span>
+            <span className="text-slate-600">|</span>
+            <span>PostgreSQL Persistence</span>
+          </div>
+
+          <div className="flex items-center space-x-4 text-[11px]">
+            <a
+              href="/admin/queues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-200 transition-colors"
+            >
+              Bull Board Monitor
+            </a>
+            <span className="text-slate-700">|</span>
+            <a
+              href="/api/health"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-200 transition-colors"
+            >
+              Health Check API
+            </a>
+            <span className="text-slate-700">|</span>
+            <span className="hover:text-slate-200 cursor-pointer">Terms of Service</span>
+            <span className="text-slate-700">|</span>
+            <span className="hover:text-slate-200 cursor-pointer">Privacy Policy</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* Clean Notification Toast (No Sparkles or Emojis) */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2.5 px-4 py-3 rounded-xl bg-slate-900 border border-indigo-500/40 text-white text-xs shadow-2xl shadow-indigo-500/20 animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <Sparkles className="h-4 w-4 text-indigo-400" />
+        <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 px-3.5 py-2 rounded-md bg-slate-900 border border-slate-700 text-white text-xs shadow-md">
+          <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
